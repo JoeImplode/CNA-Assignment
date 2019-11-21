@@ -143,10 +143,10 @@ namespace SimpleServer
         }
         public void tcpSend(Packet data)
         {
+            byte[] buffer = _ms.GetBuffer();
             _ms = new MemoryStream();
             //Serialise the data into the memory stream
             _formatter.Serialize(_ms, data);
-            byte[] buffer = _ms.GetBuffer();
             _ms.Position = 0;
             //write the data to the buffer
             _tcpWriter.Write(buffer.Length);

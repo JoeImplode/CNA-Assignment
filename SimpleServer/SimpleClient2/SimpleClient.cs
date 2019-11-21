@@ -147,8 +147,8 @@ namespace SimpleClient
             int noOfIncomingBytes;
             while ((noOfIncomingBytes = _tcpReader.ReadInt32()) != 0)
             {
-                _ms = new MemoryStream(noOfIncomingBytes);
                 byte[] buffer = _tcpReader.ReadBytes(noOfIncomingBytes);
+                _ms = new MemoryStream(noOfIncomingBytes);
                 _ms.Write(buffer, 0, noOfIncomingBytes);
                 _ms.Position = 0;
                 Packet packet = _formatter.Deserialize(_ms) as Packet;

@@ -35,28 +35,30 @@
             // 
             // Chat
             // 
-            this.Chat.Location = new System.Drawing.Point(513, 95);
+            this.Chat.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.Chat.Location = new System.Drawing.Point(87, 12);
             this.Chat.Name = "Chat";
-            this.Chat.Size = new System.Drawing.Size(211, 274);
+            this.Chat.Size = new System.Drawing.Size(461, 274);
             this.Chat.TabIndex = 0;
             this.Chat.Text = "";
             this.Chat.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
             // 
             // InputMessage
             // 
-            this.InputMessage.Location = new System.Drawing.Point(102, 95);
+            this.InputMessage.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.InputMessage.Location = new System.Drawing.Point(87, 345);
             this.InputMessage.Name = "InputMessage";
-            this.InputMessage.Size = new System.Drawing.Size(162, 129);
+            this.InputMessage.Size = new System.Drawing.Size(461, 44);
             this.InputMessage.TabIndex = 1;
             this.InputMessage.Text = "";
             // 
             // SubmitButton
             // 
-            this.SubmitButton.Location = new System.Drawing.Point(189, 346);
+            this.SubmitButton.Location = new System.Drawing.Point(572, 366);
             this.SubmitButton.Name = "SubmitButton";
             this.SubmitButton.Size = new System.Drawing.Size(75, 23);
             this.SubmitButton.TabIndex = 2;
-            this.SubmitButton.Text = "button1";
+            this.SubmitButton.Text = "Send";
             this.SubmitButton.UseVisualStyleBackColor = true;
             this.SubmitButton.Click += new System.EventHandler(this.Button1_Click);
             // 
