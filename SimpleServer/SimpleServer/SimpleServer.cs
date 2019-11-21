@@ -19,14 +19,19 @@ namespace SimpleServer
         public MemoryStream _ms;
         public string _username;
         public EndPoint _endPoint;
+        public IPAddress _ipadd;
+        public int _port;
         Client _client;
         List<Client> _clients;
         
         public SimpleServer(string ipAddress, int port)
         {
+            
             //Firstly for the constructor
             _clients = new List<Client>(); //Create a new list of clients
             System.Net.IPAddress parsedAddress = IPAddress.Parse(ipAddress); //Next, set the systems IP address
+            _ipadd = parsedAddress;
+            _port = port;
             _tcpListener = new TcpListener(parsedAddress, port); //set the TCPListener to the address and port number chosen
             Console.WriteLine("Connected"); //If successful, we will have connected
         }
@@ -34,6 +39,7 @@ namespace SimpleServer
         {
             //Firstly call the TCP listener start function
             _tcpListener.Start();
+            
             bool running = true;
             do
             {
@@ -41,7 +47,7 @@ namespace SimpleServer
                 Socket tcpSocket = _tcpListener.AcceptSocket();
                 _client = new Client(tcpSocket);
                 _clients.Add(_client); //Then add our client to the clients list
-                Thread t = new Thread(new ParameterizedThreadStart(ClientMethod)); //Create a new thread and start it for our client.
+                Thread t = new Thread(new ParameterizedThreadStart(TCPClientMethod)); //Create a new thread and start it for our client.
                 t.Start(_client);
             }
             while (running);
@@ -61,6 +67,9 @@ namespace SimpleServer
                 case PacketType.ENDPOINT:
                     LoginPacket pLoginPacket = (LoginPacket)packet;
                     _endPoint = pLoginPacket.endPoint;
+                   _client.UDPConnect(_endPoint); //if we have a log in packet, then connect the client with UDP
+                    Thread t = new Thread(new ParameterizedThreadStart(UDPClientMethod));
+                    t.Start(_client);
                     break;
             }
             return packet;
@@ -69,22 +78,23 @@ namespace SimpleServer
         {
             _tcpListener.Stop();
         }
-        public void ClientMethod(object ClientObj)
+
+        public void UDPClientMethod(object ClientObj)
+        {
+            Client client = (Client)ClientObj;
+            while(client._UdpSocket.Connected)
+            {
+                GetReturnMessage(client.UdpRead());
+            }
+        }
+
+        public void TCPClientMethod(object ClientObj)
         {
             //Create the client
             Client client = (Client)ClientObj;
-            Packet packet;
-
-            while (_tcpReader != null)
+            while(client._tcpSocket.Connected)
             {
-                if ((packet = client.TCPRead()) != null)
-                {
-                    GetReturnMessage(packet);
-                }
-                if((packet = client.UdpRead())!= null)
-                {
-                    GetReturnMessage(packet);
-                }
+                GetReturnMessage(client.TCPRead());
             }
             client.Close();
             _clients.Remove(_client);
@@ -108,11 +118,8 @@ namespace SimpleServer
         public Socket _tcpSocket;
         public Socket _UdpSocket;
         public NetworkStream _stream;
-        public NetworkStream _UdpStream;
         public BinaryReader _tcpReader;
         public BinaryWriter _tcpWriter;
-        public BinaryReader _UdpReader;
-        public BinaryWriter _UdpWriter;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
         public string _username;
@@ -121,23 +128,18 @@ namespace SimpleServer
         {
             _tcpSocket = socket;
             _stream = new NetworkStream(_tcpSocket);
-            _UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
+            _UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             _formatter = new BinaryFormatter();
             _ms = new MemoryStream();
         }
 
-        public void UDPConnect(EndPoint clientConnection, string ipAdd, int port)
+        public void UDPConnect(EndPoint clientConnection)
         {
             _UdpSocket.Connect(clientConnection);
-            IPAddress iPAddress = Dns.Resolve(ipAdd).AddressList[0];
-            IPEndPoint ipLocalEnd = new IPEndPoint(iPAddress, port);
-            _UdpStream = new NetworkStream(_UdpSocket);
-            _UdpReader = new BinaryReader(_UdpStream);
-            _UdpWriter = new BinaryWriter(_UdpStream);
-            Packet sendPacket = new LoginPacket(ipLocalEnd);
-           tcpSend(sendPacket);
+            Packet sendPacket = new LoginPacket(_UdpSocket.LocalEndPoint);
+            tcpSend(sendPacket);
         }
         public void tcpSend(Packet data)
         {
@@ -154,14 +156,9 @@ namespace SimpleServer
         public void UDPSend(Packet packet)
         {
             _ms = new MemoryStream();
-            //Serialise data
             _formatter.Serialize(_ms, packet);
             byte[] buffer = _ms.GetBuffer();
-            _ms.Position = 0;
-            _UdpWriter.Write(buffer.Length);
-            _UdpWriter.Write(buffer);
-            _UdpWriter.Flush();
-
+            _UdpSocket.Send(buffer);
         }
         public Packet TCPRead()
         {
@@ -180,17 +177,21 @@ namespace SimpleServer
 
         public Packet UdpRead()
         {
-            int noOfIncomingBytes;
-            if ((noOfIncomingBytes = _UdpReader.ReadInt32()) != 0)
-            {
-                _ms = new MemoryStream(noOfIncomingBytes);
-                byte[] buffer = _UdpReader.ReadBytes(noOfIncomingBytes);
-                _ms.Write(buffer, 0, noOfIncomingBytes);
-                _ms.Position = 0;
-                Packet packet = _formatter.Deserialize(_ms) as Packet;
-                return packet;
+            byte[] bytes = new byte[1024 * 1024];
+            try {
+                int noOfIncomingBytes;
+                if ((noOfIncomingBytes = _UdpSocket.Receive(bytes)) != 0)
+                {
+                    _ms = new MemoryStream(bytes);
+                    Packet packet = _formatter.Deserialize(_ms) as Packet;
+                    return packet;
+                }
             }
-            return null;
+            catch(SocketException e)
+            {
+                return new Packet();
+            }
+            return new Packet();
         }
 
         public NetworkStream stream(NetworkStream stream)
