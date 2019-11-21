@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading;
 using SharedClassLibrary;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Net.Security;
 
 namespace SimpleServer
 {
@@ -37,8 +38,8 @@ namespace SimpleServer
             do
             {
                 //Then while we are running, accept a socket, and add our client to the socket
-                Socket _tcpSocket = _tcpListener.AcceptSocket();
-                _client = new Client(_tcpSocket);
+                Socket tcpSocket = _tcpListener.AcceptSocket();
+                _client = new Client(tcpSocket);
                 _clients.Add(_client); //Then add our client to the clients list
                 Thread t = new Thread(new ParameterizedThreadStart(ClientMethod)); //Create a new thread and start it for our client.
                 t.Start(_client);
@@ -121,12 +122,8 @@ namespace SimpleServer
             _tcpSocket = socket;
             _stream = new NetworkStream(_tcpSocket);
             _UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            _UdpStream = new NetworkStream(_tcpSocket);
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
-            _UdpReader = new BinaryReader(_UdpStream);
-            _UdpWriter = new BinaryWriter(_UdpStream);
-
             _formatter = new BinaryFormatter();
             _ms = new MemoryStream();
         }
@@ -136,7 +133,9 @@ namespace SimpleServer
             _UdpSocket.Connect(clientConnection);
             IPAddress iPAddress = Dns.Resolve(ipAdd).AddressList[0];
             IPEndPoint ipLocalEnd = new IPEndPoint(iPAddress, port);
-
+            _UdpStream = new NetworkStream(_UdpSocket);
+            _UdpReader = new BinaryReader(_UdpStream);
+            _UdpWriter = new BinaryWriter(_UdpStream);
             Packet sendPacket = new LoginPacket(ipLocalEnd);
            tcpSend(sendPacket);
         }
@@ -164,7 +163,6 @@ namespace SimpleServer
             _UdpWriter.Flush();
 
         }
-
         public Packet TCPRead()
         {
             int noOfIncomingBytes;
@@ -209,18 +207,6 @@ namespace SimpleServer
         public void Close()
         {
             _tcpSocket.Close();
-        }
-        public void Send(Packet data, int clientIndex)
-        {
-            _ms = new MemoryStream();
-            //Serialise the data into the memory stream
-            _formatter.Serialize(_ms, data);
-            byte[] buffer = _ms.GetBuffer();
-            _ms.Position = 0;
-            //write the data to the buffer
-            _tcpWriter.Write(buffer.Length);
-            _tcpWriter.Write(buffer);
-            _tcpWriter.Flush();
         }
     }
 }

@@ -21,3 +21,14 @@ E:\Work\Year 2\CNA\Tutorials\ServerWork\SimpleServer\SimpleClient2\obj\Debug\Sim
 G:\Work\Year 2\CNA\Tutorials\ServerWork\SimpleServer\SimpleClient2\bin\Debug\SharedClassLibrary.dll
 G:\Work\Year 2\CNA\Tutorials\ServerWork\SimpleServer\SimpleClient2\bin\Debug\SharedClassLibrary.pdb
 G:\Work\Year 2\CNA\Tutorials\ServerWork\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.csproj.CopyComplete
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\bin\Debug\SimpleClient2.exe.config
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\bin\Debug\SimpleClient2.exe
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\bin\Debug\SimpleClient2.pdb
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\bin\Debug\SharedClassLibrary.dll
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\bin\Debug\SharedClassLibrary.pdb
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.csprojAssemblyReference.cache
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.ClientForm.resources
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.csproj.GenerateResource.cache
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.csproj.CopyComplete
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.exe
+G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleClient2\obj\Debug\SimpleClient2.pdb

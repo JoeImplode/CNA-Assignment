@@ -37,13 +37,14 @@ namespace SharedClassLibrary {
             this.nickName = nickName;
         }
     }
-
+    [Serializable]
     public class LoginPacket : Packet
     {
         public EndPoint endPoint;
 
         public LoginPacket(EndPoint _endPoint)
         {
+            this.type = PacketType.ENDPOINT;
             endPoint = _endPoint;
         }
     }

@@ -7,6 +7,7 @@ using System.Threading;
 using SimpleClient2;
 using SharedClassLibrary;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace SimpleClient
 {
@@ -18,11 +19,15 @@ namespace SimpleClient
         private BinaryWriter _tcpWriter;
         private BinaryReader _UdpReader;
         private BinaryWriter _UdpWriter;
+
         public UdpClient _UdpClient;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
         private Thread _readerThread;
         public ClientForm _messageForm;
+
+        public EndPoint _localEndPoint;
+
         public string ipAddress;
         public int port;
         public SimpleClient()
@@ -40,20 +45,18 @@ namespace SimpleClient
             _tcpClient.Connect(ipAddress,port);
             _stream = _tcpClient.GetStream();
             _UdpClient.Connect(ipAddress,port);
+
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
             _UdpReader = new BinaryReader(_stream);
             _UdpWriter = new BinaryWriter(_stream);
-
-            EndPoint localEndPoint = _UdpClient.Client.LocalEndPoint;
-
-            LoginPacket tempLogin = new LoginPacket(localEndPoint);
-
             _formatter = new BinaryFormatter();
 
-            tcpSend(tempLogin);
-
+            _localEndPoint = _UdpClient.Client.LocalEndPoint;
             
+            LoginPacket tempLogin = new LoginPacket(_localEndPoint);
+
+            tcpSend(tempLogin);
             _readerThread = new Thread(new ThreadStart(ProcessServerResponse));
             Application.Run(_messageForm);
             return true;
@@ -89,8 +92,7 @@ namespace SimpleClient
         }
 
         public void ProcessServerResponse()
-        {
-            
+        {        
             IPAddress iPAddress = Dns.Resolve(ipAddress).AddressList[0];
             IPEndPoint ipLocalEnd = new IPEndPoint(iPAddress, port);
             Packet sendPacket = new LoginPacket(ipLocalEnd);
@@ -114,12 +116,11 @@ namespace SimpleClient
         public void tcpSend(Packet data)
         {
             MemoryStream ms = new MemoryStream();
-
             _ms = new MemoryStream();
+
             _formatter.Serialize(_ms, data); //Serialise the data into the memory stream
             byte[] buffer = _ms.GetBuffer();
             _ms.Position = 0;
-
             _tcpWriter.Write(buffer.Length);
             _tcpWriter.Write(buffer);
             _tcpWriter.Flush();
@@ -130,8 +131,8 @@ namespace SimpleClient
             _ms = new MemoryStream();
             _formatter.Serialize(_ms, data); //Serialise the data into the memory stream
             byte[] buffer = _ms.GetBuffer();
+            
             _ms.Position = 0;
-
             _UdpWriter.Write(buffer.Length);
             _UdpWriter.Write(buffer);
             _UdpWriter.Flush();
