@@ -48,6 +48,7 @@ namespace SimpleClient2
         private void Button1_Click(object sender, EventArgs e)
         {
             _client.CreateMessage(InputMessage.Text);
+            InputMessage.Clear();
         }
 
         private void ClientForm_Load(object sender, EventArgs e)
@@ -57,6 +58,21 @@ namespace SimpleClient2
         private void ClientForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _client.Stop();
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            _client.CreateNickName(InputMessage.Text);
+            InputMessage.Clear();
+        }
+
+        private void InputMessage_TextChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

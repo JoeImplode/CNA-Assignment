@@ -8,28 +8,34 @@ using SimpleClient2;
 using SharedClassLibrary;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Collections.Generic;
 
 namespace SimpleClient
 {
     public class SimpleClient
     {
-        public TcpClient _tcpClient;
-        public UdpClient _UdpClient;
         private BinaryReader _tcpReader;
         private BinaryWriter _tcpWriter;
         private NetworkStream _stream;
+        private Thread _readerThread;
+        private Thread _udpThread;
+
+        public TcpClient _tcpClient;
+        public UdpClient _UdpClient;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
-        private Thread _readerThread;
         public ClientForm _messageForm;
         public string ipAddress;
         public int port;
+
+        List<string> clients;
 
         public SimpleClient()
         {
             _messageForm = new ClientForm(this);
             _tcpClient = new TcpClient();
             _UdpClient = new UdpClient();
+            clients = new List<string>();
         }
 
         public bool Connect(string address, int portNum)
@@ -44,11 +50,11 @@ namespace SimpleClient
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
             _formatter = new BinaryFormatter();
+            _ms = new MemoryStream();
 
             _UdpClient.Connect(ipAddress, port);
             LoginPacket tempLogin = new LoginPacket(_UdpClient.Client.LocalEndPoint);
             tcpSend(tempLogin);
-
             _readerThread = new Thread(new ThreadStart(TCPRead));
             Application.Run(_messageForm);
             return true;
@@ -62,6 +68,9 @@ namespace SimpleClient
         {
             _readerThread.Abort();
             _tcpClient.Close();
+
+            _udpThread.Abort();
+            _UdpClient.Close();
         }
         private void ClientLogic(Packet packet)
         {
@@ -78,8 +87,12 @@ namespace SimpleClient
                 case PacketType.ENDPOINT:
                     LoginPacket pLogIn = (LoginPacket)packet;
                     _UdpClient.Connect((IPEndPoint)pLogIn.endPoint);
-                    Thread t = new Thread(UdpRead);
-                    t.Start();
+                    _udpThread = new Thread(UdpRead);
+                    _udpThread.Start();
+                    break;
+                case PacketType.USERLIST:
+                    UserListPacket pUsers = (UserListPacket)packet;
+                    clients = pUsers.userList;
                     break;
             }
         }
@@ -118,21 +131,43 @@ namespace SimpleClient
         public void TCPRead()
         {
             int noOfIncomingBytes;
-            while ((noOfIncomingBytes = _tcpReader.ReadInt32()) != 0)
+            try
             {
-                byte[] buffer = _tcpReader.ReadBytes(noOfIncomingBytes);
-                _ms = new MemoryStream(noOfIncomingBytes);
-                _ms.Write(buffer, 0, noOfIncomingBytes);
-                _ms.Position = 0;
-                Packet packet = _formatter.Deserialize(_ms) as Packet;
-                ClientLogic(packet);
+                while ((noOfIncomingBytes = _tcpReader.ReadInt32()) != 0)
+                {
+                    _ms = new MemoryStream(noOfIncomingBytes);
+                    byte[] buffer = _tcpReader.ReadBytes(noOfIncomingBytes);
+                    _ms.Write(buffer, 0, noOfIncomingBytes);
+                    _ms.Position = 0;
+                    Packet packet = _formatter.Deserialize(_ms) as Packet;
+                    ClientLogic(packet);
+                }
             }
-           
+            catch(SocketException e)
+            {
+
+            }
+        }
+        public void CreateServerMessage(string message)
+        {
+            //udpSend(new ChatMessagePacket(message));
+            tcpSend(new ChatMessagePacket(message));
+        }
+
+        public void CreateNickName(string nickName)
+        {
+            //udpSend(new NickNamePacket(nickName));
+            tcpSend(new NickNamePacket(nickName)); 
         }
         public void CreateMessage(string message)
         {
+            //udpSend(new ChatMessagePacket(message));
             tcpSend(new ChatMessagePacket(message));
-            udpSend(new ChatMessagePacket(message));
+        }
+
+        public void RequestDirectID()
+        {
+
         }
     }
 }

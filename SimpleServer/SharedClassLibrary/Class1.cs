@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace SharedClassLibrary {
@@ -20,7 +21,7 @@ namespace SharedClassLibrary {
     public class ChatMessagePacket : Packet
     {
         public string message = string.Empty;
-        public ChatMessagePacket (string message)
+        public ChatMessagePacket(string message)
         {
             this.type = PacketType.CHATMESSAGE;
             this.message = message;
@@ -46,6 +47,17 @@ namespace SharedClassLibrary {
         {
             this.type = PacketType.ENDPOINT;
             endPoint = _endPoint;
+        }
+    }
+    [Serializable]
+    public class UserListPacket : Packet
+    {
+        public List<string> userList;
+
+        public UserListPacket(List<string> _userList)
+        {
+            this.type = PacketType.USERLIST;
+            userList = _userList;
         }
     }
 
