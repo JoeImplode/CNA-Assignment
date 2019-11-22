@@ -8,6 +8,15 @@ using SharedClassLibrary;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Security;
 
+
+//-------------------------------------------------------
+/* PROGRAM HELP:
+ * The server holds a "mimick" client class which holds all operations for our actual clients that connect
+ * Our get methods for the client and server call their respective handling functions
+ * 1)Create a client and have it send a log in packet
+ * 2)When our server constructs, it will handle the log in packet and store that endpoint info about that client
+ */
+//------------------------------------------------------
 namespace SimpleServer
 {
     class SimpleServer
@@ -26,35 +35,36 @@ namespace SimpleServer
         
         public SimpleServer(string ipAddress, int port)
         {
-            
-            //Firstly for the constructor
-            _clients = new List<Client>(); //Create a new list of clients
-            System.Net.IPAddress parsedAddress = IPAddress.Parse(ipAddress); //Next, set the systems IP address
+            //Create a list of clients
+            //listen for the tcp connection created from client
+            _clients = new List<Client>();
+            System.Net.IPAddress parsedAddress = IPAddress.Parse(ipAddress);
             _ipadd = parsedAddress;
             _port = port;
-            _tcpListener = new TcpListener(parsedAddress, port); //set the TCPListener to the address and port number chosen
-            Console.WriteLine("Connected"); //If successful, we will have connected
+            _tcpListener = new TcpListener(parsedAddress, port);
+            Console.WriteLine("Connected");
         }
+
         public void Start()
         {
-            //Firstly call the TCP listener start function
             _tcpListener.Start();
-            
             bool running = true;
             do
             {
-                //Then while we are running, accept a socket, and add our client to the socket
+                //accept the socket we are listening out for
+                //add our temporary client to the clients list
+                //Start the client method
                 Socket tcpSocket = _tcpListener.AcceptSocket();
                 _client = new Client(tcpSocket);
-                _clients.Add(_client); //Then add our client to the clients list
-                Thread t = new Thread(new ParameterizedThreadStart(TCPClientMethod)); //Create a new thread and start it for our client.
+                _clients.Add(_client);
+                Thread t = new Thread(new ParameterizedThreadStart(TCPClientMethod));
                 t.Start(_client);
             }
             while (running);
         }
         public Packet GetReturnMessage(Packet packet)
         {
-            switch (packet.type) //check the packet to see if it's a message or a nickname
+            switch (packet.type)
             {
                 case PacketType.CHATMESSAGE:
                     ChatMessagePacket pChat = (ChatMessagePacket)packet;
@@ -67,7 +77,7 @@ namespace SimpleServer
                 case PacketType.ENDPOINT:
                     LoginPacket pLoginPacket = (LoginPacket)packet;
                     _endPoint = pLoginPacket.endPoint;
-                   _client.UDPConnect(_endPoint); //if we have a log in packet, then connect the client with UDP
+                   _client.UDPConnect(_endPoint);
                     Thread t = new Thread(new ParameterizedThreadStart(UDPClientMethod));
                     t.Start(_client);
                     break;
@@ -90,7 +100,6 @@ namespace SimpleServer
 
         public void TCPClientMethod(object ClientObj)
         {
-            //Create the client
             Client client = (Client)ClientObj;
             while(client._tcpSocket.Connected)
             {
@@ -101,15 +110,14 @@ namespace SimpleServer
         }
         public void CreateMessage(string msg, Client client)
         {
-            //When creating a message create a new packet and set it to a chat message child object
             Packet p = new ChatMessagePacket(msg);
-            client.tcpSend(p); //them send the message to the index
+            client.tcpSend(p);
         }
-        public void SendMessageAllClients(string msg) //function for sending to all clients
+        public void SendMessageAllClients(string msg)
         {
             for(int i = 0; i < _clients.Count; i++)
             {
-                CreateMessage(msg, _clients[i]); //send a message to every client
+                CreateMessage(msg, _clients[i]);
             }
         }
     };
@@ -143,12 +151,11 @@ namespace SimpleServer
         }
         public void tcpSend(Packet data)
         {
-            byte[] buffer = _ms.GetBuffer();
+            MemoryStream ms = new MemoryStream();
             _ms = new MemoryStream();
-            //Serialise the data into the memory stream
             _formatter.Serialize(_ms, data);
+            byte[] buffer = _ms.GetBuffer();
             _ms.Position = 0;
-            //write the data to the buffer
             _tcpWriter.Write(buffer.Length);
             _tcpWriter.Write(buffer);
             _tcpWriter.Flush();

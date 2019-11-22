@@ -14,18 +14,17 @@ namespace SimpleClient
     public class SimpleClient
     {
         public TcpClient _tcpClient;
-        private NetworkStream _stream;
+        public UdpClient _UdpClient;
         private BinaryReader _tcpReader;
         private BinaryWriter _tcpWriter;
-
-        public UdpClient _UdpClient;
+        private NetworkStream _stream;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
         private Thread _readerThread;
         public ClientForm _messageForm;
-
         public string ipAddress;
         public int port;
+
         public SimpleClient()
         {
             _messageForm = new ClientForm(this);
@@ -35,26 +34,25 @@ namespace SimpleClient
 
         public bool Connect(string address, int portNum)
         {
+            //Set up the tcp client and the udp client
+            //Send a temporary login packet to the server
+            //Start the reader thread
             ipAddress = address;
             port = portNum;
-
             _tcpClient.Connect(ipAddress,port);
             _stream = _tcpClient.GetStream();
-           
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
             _formatter = new BinaryFormatter();
 
             _UdpClient.Connect(ipAddress, port);
             LoginPacket tempLogin = new LoginPacket(_UdpClient.Client.LocalEndPoint);
-
             tcpSend(tempLogin);
 
             _readerThread = new Thread(new ThreadStart(TCPRead));
             Application.Run(_messageForm);
             return true;
         }
-
         public void Run()
         {
             _readerThread.Start();
@@ -65,7 +63,6 @@ namespace SimpleClient
             _readerThread.Abort();
             _tcpClient.Close();
         }
-
         private void ClientLogic(Packet packet)
         {
             switch (packet.type)
@@ -86,35 +83,11 @@ namespace SimpleClient
                     break;
             }
         }
-        /*
-        public void ProcessServerResponse()
-        {        
-            IPAddress iPAddress = Dns.Resolve(ipAddress).AddressList[0];
-            IPEndPoint ipLocalEnd = new IPEndPoint(iPAddress, port);
-            Packet sendPacket = new LoginPacket(ipLocalEnd);
-            tcpSend(sendPacket);
-
-            Packet packet;
-
-            while (_tcpReader != null)
-            {
-                if ((packet = TCPRead()) != null)
-                {
-                    ClientLogic(packet);
-                }
-                if ((packet = UdpRead()) != null)
-                {
-                    ClientLogic(packet);
-                }
-            }
-        }
-        */
         public void tcpSend(Packet data)
         {
             MemoryStream ms = new MemoryStream();
             _ms = new MemoryStream();
-
-            _formatter.Serialize(_ms, data); //Serialise the data into the memory stream
+            _formatter.Serialize(_ms, data);
             byte[] buffer = _ms.GetBuffer();
             _ms.Position = 0;
             _tcpWriter.Write(buffer.Length);
@@ -156,7 +129,6 @@ namespace SimpleClient
             }
            
         }
-
         public void CreateMessage(string message)
         {
             tcpSend(new ChatMessagePacket(message));
