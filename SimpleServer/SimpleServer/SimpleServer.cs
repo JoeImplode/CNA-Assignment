@@ -26,7 +26,6 @@ namespace SimpleServer
         public TcpListener _tcpListener;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
-        public string _username;
         
         public EndPoint _endPoint;
         public IPAddress _ipadd;
@@ -34,6 +33,7 @@ namespace SimpleServer
         Client _client;
         public List<Client> _clients;
         public List<string> _userList;
+ 
         public SimpleServer(string ipAddress, int port)
         {
             //Create a list of clients
@@ -64,19 +64,19 @@ namespace SimpleServer
             }
             while (running);
         }
-        public Packet GetReturnMessage(Packet packet)
+        public Packet GetReturnMessage(Packet packet, Client _client)
         {
             switch (packet.type)
             {
                 case PacketType.CHATMESSAGE:
                     ChatMessagePacket pChat = (ChatMessagePacket)packet;
-                    SendMessageAllClients(_username + " - " + pChat.message,-1);
+                    SendMessageAllClients(_client._username + " - " + pChat.message);
                     break;
                 case PacketType.NICKNAME:
                     NickNamePacket pNick = (NickNamePacket)packet;
-                    _username = pNick.nickName;
-                    //_userList.Add(_username);
-                    //SendClientList(_userList);
+                    _client._username = pNick.nickName;
+                    _userList.Add(_client._username);
+                    SendClientList(_userList);
                     break;
                 case PacketType.ENDPOINT:
                     LoginPacket pLoginPacket = (LoginPacket)packet;
@@ -103,7 +103,7 @@ namespace SimpleServer
             Client client = (Client)ClientObj;
             while(client._UdpSocket.Connected)
             {
-                GetReturnMessage(client.UdpRead());
+                GetReturnMessage(client.UdpRead(),client);
             }
         }
 
@@ -112,7 +112,7 @@ namespace SimpleServer
             Client client = (Client)ClientObj;
             while(client._tcpSocket.Connected)
             {
-                GetReturnMessage(client.TCPRead());
+                GetReturnMessage(client.TCPRead(),client);
             }
             client.Close();
             _clients.Remove(_client);
@@ -123,18 +123,11 @@ namespace SimpleServer
             client.tcpSend(p);
             //client.UDPSend(p);
         }
-        public void SendMessageAllClients(string msg, int index)
+        public void SendMessageAllClients(string msg)
         {
-            if (index == -1)
+            for (int i = 0; i < _clients.Count; i++)
             {
-                for (int i = 0; i < _clients.Count; i++)
-                {
-                    CreateMessage(msg, _clients[i]);
-                }
-            }
-            else
-            {
-                CreateMessage(msg, _clients[index]);
+                CreateMessage(msg, _clients[i]);
             }
         }
 
@@ -156,8 +149,8 @@ namespace SimpleServer
         public BinaryWriter _tcpWriter;
         public BinaryFormatter _formatter;
         public MemoryStream _ms;
+        public string username;
         public string _username;
-
         public Client(Socket socket)
         {
             _tcpSocket = socket;
