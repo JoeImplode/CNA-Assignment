@@ -13,11 +13,10 @@ namespace SimpleClient2
         UpdateClientListBoxDelegate _updateClientListBoxDeletage;
 
         public SimpleClient.SimpleClient _Client;
-
         public bool _canConnectToServer;
         public bool _canSetClientNickName;
-
         public string _clientNickName;
+        public int _clientListSelection;
 
         public ClientForm(SimpleClient.SimpleClient client)
         {
@@ -26,8 +25,11 @@ namespace SimpleClient2
             _updateClientListBoxDeletage = new UpdateClientListBoxDelegate(UpdateClientListBox);
             _Client = client;
             InputMessage.Select();
-            _canConnectToServer = true;
+            _canConnectToServer = false;
             _canSetClientNickName = true;
+            button2.Enabled = _canConnectToServer;
+            _clientListSelection = 0;
+            comboBox1.Enabled = false;
         }
 
         public void UpdateClientListBox(List<string> clientListFromClient)
@@ -43,6 +45,7 @@ namespace SimpleClient2
                 {
                     comboBox1.Items.Add(clientListFromClient[i]);
                 }
+                comboBox1.SelectedIndex = 0;
             }
         }
 
@@ -74,8 +77,16 @@ namespace SimpleClient2
         {
             if (_canConnectToServer == false)
             {
-                _Client.CreateMessage(InputMessage.Text);
-                InputMessage.Clear();
+                //If we have selected the server, then send the message to all clients
+                if (_clientListSelection == 0)
+                {
+                    _Client.CreateMessage(InputMessage.Text);
+                    InputMessage.Clear();
+                }
+                else
+                {
+                    _Client.CreateMessage(InputMessage.Text, _clientListSelection);
+                }
             }
         }
 
@@ -90,6 +101,8 @@ namespace SimpleClient2
 
         private void button1_Click_1(object sender, EventArgs e)
         {
+            _canConnectToServer = true;
+            button2.Enabled = _canConnectToServer;
             _clientNickName = InputMessage.Text;
         }
         private void InputMessage_TextChanged(object sender, EventArgs e)
@@ -98,16 +111,20 @@ namespace SimpleClient2
         }
         private void comboBox1_SelectedIndexChanged_2(object sender, EventArgs e)
         {
-
+            _clientListSelection = comboBox1.SelectedIndex;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            _Client.CreateNickName(_clientNickName);
-            _canConnectToServer = false;
-            _canSetClientNickName = false;
-            button2.Enabled = _canConnectToServer;
-            button1.Enabled = _canSetClientNickName;
+            if (_canConnectToServer)
+            {
+                _Client.CreateNickName(_clientNickName);
+                _canConnectToServer = false;
+                _canSetClientNickName = false;
+                button1.Enabled = _canSetClientNickName;
+                button2.Enabled = _canConnectToServer;
+                comboBox1.Enabled = true;
+            }
         }
     }
 }

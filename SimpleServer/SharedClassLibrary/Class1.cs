@@ -21,10 +21,12 @@ namespace SharedClassLibrary {
     public class ChatMessagePacket : Packet
     {
         public string message = string.Empty;
-        public ChatMessagePacket(string message)
+        public int index;
+        public ChatMessagePacket(string message, int index = 0)
         {
             this.type = PacketType.CHATMESSAGE;
             this.message = message;
+            this.index = index;
         }
     }
     [Serializable]
@@ -60,7 +62,6 @@ namespace SharedClassLibrary {
             userList = _userList;
         }
     }
-
     public class Class1
     {
     }

@@ -158,26 +158,21 @@ namespace SimpleClient
                     HandlePacket(packetFromServer);
                 }
             }
-            catch(SocketException e)
+            catch (SocketException e)
             {
 
             }
         }
-        public void CreateServerMessage(string message)
-        {
-            //udpSend(new ChatMessagePacket(message));
-            TCPSend(new ChatMessagePacket(message));
-        }
-
         public void CreateNickName(string nickName)
         {
             //udpSend(new NickNamePacket(nickName));
             TCPSend(new NickNamePacket(nickName)); 
         }
-        public void CreateMessage(string message)
+        public void CreateMessage(string message,int index = 0)
         {
             //udpSend(new ChatMessagePacket(message));
-            TCPSend(new ChatMessagePacket(message));
+            int _index = index;
+            TCPSend(new ChatMessagePacket(message,_index));
         }
 
         public void RequestDirectID()

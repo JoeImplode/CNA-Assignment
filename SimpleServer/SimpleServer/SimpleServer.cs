@@ -69,7 +69,14 @@ namespace SimpleServer
                 case PacketType.CHATMESSAGE:
                     //If we receive a chat message then send a message to al clients using the username and message
                     ChatMessagePacket msgFromClient = (ChatMessagePacket)packetFromClient;
-                    SendMessageAllClients(mimickClient._username + " - " + msgFromClient.message);
+                    if (msgFromClient.index == 0)
+                    {
+                        SendMessageAllClients(mimickClient._username + " - " + msgFromClient.message);
+                    }
+                    else
+                    {
+                        CreateMessage(mimickClient._username + " whispers to you: " + msgFromClient.message, _clientList[msgFromClient.index-1]);
+                    }
                     break;
                 case PacketType.NICKNAME:
                     //Set the username to the nick name packet passed in
