@@ -21,77 +21,74 @@ namespace SimpleServer
 {
     class SimpleServer
     {
-        public BinaryReader _tcpReader;
-        public BinaryWriter _tcpWriter;
         public TcpListener _tcpListener;
-        public BinaryFormatter _formatter;
-        public MemoryStream _ms;
-        
-        public EndPoint _endPoint;
-        public IPAddress _ipadd;
-        public int _port;
-        Client _client;
-        public List<Client> _clients;
-        public List<string> _userList;
+        public EndPoint _mimickEndPoint;
+        public IPAddress _serverIpAddress;
+        public int _serverPort;
+        Client _mimickClient;
+        public List<Client> _clientList;
+        public List<string> _listOfNicknames;
  
-        public SimpleServer(string ipAddress, int port)
+        public SimpleServer(string serverIpAddress, int port)
         {
-            //Create a list of clients
-            //listen for the tcp connection created from client
-            _clients = new List<Client>();
-            System.Net.IPAddress parsedAddress = IPAddress.Parse(ipAddress);
-            _ipadd = parsedAddress;
-            _port = port;
+            //Create a list of clients and pars and IP address
+            _clientList = new List<Client>();
+            System.Net.IPAddress parsedAddress = IPAddress.Parse(serverIpAddress);
+            _serverIpAddress = parsedAddress;
+            _serverPort = port;
+            //Listen out on the parsed address and port for tcp connections
             _tcpListener = new TcpListener(parsedAddress, port);
-            Console.WriteLine("Connected");
-            _userList = new List<string>();
+            //Set our user list for all usernames
+            _listOfNicknames = new List<string>();
         }
 
         public void Start()
         {
             _tcpListener.Start();
-            bool running = true;
+            bool connection = true;
             do
             {
-                //accept the socket we are listening out for
-                //add our temporary client to the clients list
-                //Start the client method
+                //This loop checks if a new connection has been made to the server, if so, it then returns the tcp socket back to the client
+                //Accept socket accepts a pending connection in the tcp listener - we set it to the tcpSocket
                 Socket tcpSocket = _tcpListener.AcceptSocket();
-                _client = new Client(tcpSocket);
-                _clients.Add(_client);
+                //Create our new client and pass the socket into the constructor, then add the client to the clients list
+                _mimickClient = new Client(tcpSocket);
+                _clientList.Add(_mimickClient);
+                //Start a thread for our tcp client connection
                 Thread t = new Thread(new ParameterizedThreadStart(TCPClientMethod));
-                t.Start(_client);
+                t.Start(_mimickClient);
             }
-            while (running);
+            while (connection);
         }
-        public Packet GetReturnMessage(Packet packet, Client _client)
+        public Packet HandlePacket(Packet packetFromClient, Client mimickClient)
         {
-            switch (packet.type)
+            switch (packetFromClient.type)
             {
                 case PacketType.CHATMESSAGE:
-                    ChatMessagePacket pChat = (ChatMessagePacket)packet;
-                    SendMessageAllClients(_client._username + " - " + pChat.message);
+                    //If we receive a chat message then send a message to al clients using the username and message
+                    ChatMessagePacket msgFromClient = (ChatMessagePacket)packetFromClient;
+                    SendMessageAllClients(mimickClient._username + " - " + msgFromClient.message);
                     break;
                 case PacketType.NICKNAME:
-                    NickNamePacket pNick = (NickNamePacket)packet;
-                    _client._username = pNick.nickName;
-                    _userList.Add(_client._username);
-                    SendClientList(_userList);
+                    //Set the username to the nick name packet passed in
+                    NickNamePacket nickFromClient = (NickNamePacket)packetFromClient;
+                    mimickClient._username = nickFromClient.nickName;
+                    //Add the clients username to the user list and send it to the client
+                    _listOfNicknames.Add(mimickClient._username);
+                    SendClientList(_listOfNicknames);
                     break;
                 case PacketType.ENDPOINT:
-                    LoginPacket pLoginPacket = (LoginPacket)packet;
-                    _endPoint = pLoginPacket.endPoint;
-                    _client.UDPConnect(_endPoint);
-                    //_clients.Remove(_client);
+                    //We take our login packet from the client and set the mimick end point to the login.endpoint data
+                    LoginPacket loginFromClient = (LoginPacket)packetFromClient;
+                    _mimickEndPoint = loginFromClient.endPoint;
+                    //We then connect our mimick client through UDP using this mimick end point
+                    mimickClient.UDPSendLocalEP(_mimickEndPoint);
+                    //Then start a thread with our mimicked client
                     Thread t = new Thread(new ParameterizedThreadStart(UDPClientMethod));
-                    t.Start(_client);
-                    break;
-                case PacketType.USERLIST:
-                    UserListPacket pUserPacket = (UserListPacket)packet;
-                    _userList = pUserPacket.userList;
+                    t.Start(mimickClient);
                     break;
             }
-            return packet;
+            return packetFromClient;
         }
         public void Stop()
         {
@@ -100,56 +97,54 @@ namespace SimpleServer
 
         public void UDPClientMethod(object ClientObj)
         {
-            Client client = (Client)ClientObj;
-            while(client._UdpSocket.Connected)
+            Client clientUDP = (Client)ClientObj;
+            while(clientUDP._UdpSocket.Connected)
             {
-                GetReturnMessage(client.UdpRead(),client);
+                HandlePacket(clientUDP.UdpRead(),clientUDP);
             }
         }
 
         public void TCPClientMethod(object ClientObj)
         {
-            Client client = (Client)ClientObj;
-            while(client._tcpSocket.Connected)
+            Client clientTCP = (Client)ClientObj;
+            while(clientTCP._tcpSocket.Connected)
             {
-                GetReturnMessage(client.TCPRead(),client);
+                HandlePacket(clientTCP.TCPRead(),clientTCP);
             }
-            client.Close();
-            _clients.Remove(_client);
+            clientTCP.Close();
+            _clientList.Remove(_mimickClient);
         }
-        public void CreateMessage(string msg, Client client)
+        public void CreateMessage(string message, Client recipient)
         {
-            Packet p = new ChatMessagePacket(msg);
-            client.tcpSend(p);
+            Packet packetToSend = new ChatMessagePacket(message);
+            recipient.tcpSend(packetToSend);
             //client.UDPSend(p);
         }
-        public void SendMessageAllClients(string msg)
+        public void SendMessageAllClients(string message)
         {
-            for (int i = 0; i < _clients.Count; i++)
+            for (int i = 0; i < _clientList.Count; i++)
             {
-                CreateMessage(msg, _clients[i]);
+                CreateMessage(message, _clientList[i]);
             }
         }
 
         public void SendClientList(List<string> clientList)
         {
             Packet p = new UserListPacket(clientList);
-            for (int i = 0; i < _clients.Count; i++)
+            for (int i = 0; i < _clientList.Count; i++)
             {
-                _clients[i].tcpSend(p);
+                _clientList[i].tcpSend(p);
             }
         }
     };
     class Client
     {
-        public Socket _tcpSocket;
-        public Socket _UdpSocket;
+        public Socket _tcpSocket, _UdpSocket;
         public NetworkStream _stream;
         public BinaryReader _tcpReader;
         public BinaryWriter _tcpWriter;
         public BinaryFormatter _formatter;
-        public MemoryStream _ms;
-        public string username;
+        public MemoryStream _memoryStream;
         public string _username;
         public Client(Socket socket)
         {
@@ -159,32 +154,33 @@ namespace SimpleServer
             _tcpWriter = new BinaryWriter(_stream);
             _UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             _formatter = new BinaryFormatter();
-            _ms = new MemoryStream();
+            _memoryStream = new MemoryStream();
         }
 
-        public void UDPConnect(EndPoint clientConnection)
+        public void UDPSendLocalEP(EndPoint clientEndPoint)
         {
-            _UdpSocket.Connect(clientConnection);
+            //Connects our clientConnection to the socket
+            _UdpSocket.Connect(clientEndPoint);
+            //Then we send our login packet containing the local end point back to the UDPClient
             Packet sendPacket = new LoginPacket(_UdpSocket.LocalEndPoint);
             tcpSend(sendPacket);
         }
 
         public void tcpSend(Packet data)
         {
-            MemoryStream ms = new MemoryStream();
-            _ms = new MemoryStream();
-            _formatter.Serialize(_ms, data);
-            byte[] buffer = _ms.GetBuffer();
-            _ms.Position = 0;
+            _memoryStream = new MemoryStream();
+            _formatter.Serialize(_memoryStream, data);
+            byte[] buffer = _memoryStream.GetBuffer();
+            _memoryStream.Position = 0;
             _tcpWriter.Write(buffer.Length);
             _tcpWriter.Write(buffer);
             _tcpWriter.Flush();
         }
-        public void UDPSend(Packet packet)
+        public void UDPSend(Packet data)
         {
-            _ms = new MemoryStream();
-            _formatter.Serialize(_ms, packet);
-            byte[] buffer = _ms.GetBuffer();
+            _memoryStream = new MemoryStream();
+            _formatter.Serialize(_memoryStream, data);
+            byte[] buffer = _memoryStream.GetBuffer();
             _UdpSocket.Send(buffer);
         }
         public Packet TCPRead()
@@ -194,12 +190,12 @@ namespace SimpleServer
             { 
                 if ((noOfIncomingBytes = _tcpReader.ReadInt32()) != 0)
                 {
-                    _ms = new MemoryStream(noOfIncomingBytes);
+                    _memoryStream = new MemoryStream(noOfIncomingBytes);
                     byte[] buffer = _tcpReader.ReadBytes(noOfIncomingBytes);
-                    _ms.Write(buffer, 0, noOfIncomingBytes);
-                    _ms.Position = 0;
-                    Packet packet = _formatter.Deserialize(_ms) as Packet;
-                    return packet;
+                    _memoryStream.Write(buffer, 0, noOfIncomingBytes);
+                    _memoryStream.Position = 0;
+                    Packet tcpReadPacket = _formatter.Deserialize(_memoryStream) as Packet;
+                    return tcpReadPacket;
                 }
             }
             catch(SocketException e)
@@ -216,9 +212,9 @@ namespace SimpleServer
                 int noOfIncomingBytes;
                 if ((noOfIncomingBytes = _UdpSocket.Receive(bytes)) != 0)
                 {
-                    _ms = new MemoryStream(bytes);
-                    Packet packet = _formatter.Deserialize(_ms) as Packet;
-                    return packet;
+                    _memoryStream = new MemoryStream(bytes);
+                    Packet udpReadPacket = _formatter.Deserialize(_memoryStream) as Packet;
+                    return udpReadPacket;
                 }
             }
             catch(SocketException e)

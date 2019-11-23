@@ -17,114 +17,124 @@ namespace SimpleClient
         private BinaryReader _tcpReader;
         private BinaryWriter _tcpWriter;
         private NetworkStream _stream;
-        private Thread _readerThread;
-        private Thread _udpThread;
-
+        private Thread _tcpReaderThread, _udpReaderThread;
         public TcpClient _tcpClient;
-        public UdpClient _UdpClient;
+        public UdpClient _udpClient;
         public BinaryFormatter _formatter;
-        public MemoryStream _ms;
-        public ClientForm _messageForm;
-        public string ipAddress;
-        public int port;
+        public MemoryStream _memoryStream;
+        public ClientForm _form;
+        public string _serverIPAddress;
+        public int _serverPort;
 
-        List<string> clients;
+        public List<string> clients;
 
         public SimpleClient()
         {
-            _messageForm = new ClientForm(this);
+            _form = new ClientForm(this);
             _tcpClient = new TcpClient();
-            _UdpClient = new UdpClient();
+            _udpClient = new UdpClient();
             clients = new List<string>();
         }
 
-        public bool Connect(string address, int portNum)
+        public bool Connect(string serverIPAddress, int serverPort)
         {
-            //Set up the tcp client and the udp client
-            //Send a temporary login packet to the server
-            //Start the reader thread
-            ipAddress = address;
-            port = portNum;
-            _tcpClient.Connect(ipAddress,port);
+            //connect the tcp client to the ip address and port number
+            _serverIPAddress = serverIPAddress;
+            _serverPort = serverPort;
+            _tcpClient.Connect(_serverIPAddress,_serverPort);
             _stream = _tcpClient.GetStream();
+            //Set the reader, writer, formatter and memory stream
             _tcpReader = new BinaryReader(_stream);
             _tcpWriter = new BinaryWriter(_stream);
             _formatter = new BinaryFormatter();
-            _ms = new MemoryStream();
-
-            _UdpClient.Connect(ipAddress, port);
-            LoginPacket tempLogin = new LoginPacket(_UdpClient.Client.LocalEndPoint);
-            tcpSend(tempLogin);
-            _readerThread = new Thread(new ThreadStart(TCPRead));
-            Application.Run(_messageForm);
+            _memoryStream = new MemoryStream();
+            //Connect our UDP client to the ip address and port
+            _udpClient.Connect(_serverIPAddress, _serverPort);
+            //Create a temporary login packet sent through TCP to set the details for UDP
+            LoginPacket logInPacket = new LoginPacket(_udpClient.Client.LocalEndPoint);
+            TCPSend(logInPacket);
+            //Finally start the reader thread
+            _tcpReaderThread = new Thread(new ThreadStart(TCPRead));
+            Application.Run(_form);
             return true;
         }
         public void Run()
         {
-            _readerThread.Start();
+            _tcpReaderThread.Start();
         }
 
         public void Stop()
         {
-            _readerThread.Abort();
+            _tcpReaderThread.Abort();
             _tcpClient.Close();
 
-            _udpThread.Abort();
-            _UdpClient.Close();
+            _udpReaderThread.Abort();
+            _udpClient.Close();
         }
-        private void ClientLogic(Packet packet)
+        private void HandlePacket(Packet packetFromServer)
         {
-            switch (packet.type)
+            switch (packetFromServer.type)
             {
                 case PacketType.CHATMESSAGE:
-                    ChatMessagePacket pChat = (ChatMessagePacket)packet;
-                    _messageForm.UpdateChatWindow(pChat.message);
+                    //Update our window with our message
+                    ChatMessagePacket messagePacket = (ChatMessagePacket)packetFromServer;
+                    _form.UpdateChatWindow(messagePacket.message);
                     break;
                 case PacketType.NICKNAME:
-                    NickNamePacket pNick = (NickNamePacket)packet;
-                    _messageForm.UpdateChatWindow(pNick.nickName);
+                    //Update our window with our nickname
+                    NickNamePacket nicknamePacket = (NickNamePacket)packetFromServer;
+                    _form.UpdateChatWindow(nicknamePacket.nickName);
                     break;
                 case PacketType.ENDPOINT:
-                    LoginPacket pLogIn = (LoginPacket)packet;
-                    _UdpClient.Connect((IPEndPoint)pLogIn.endPoint);
-                    _udpThread = new Thread(UdpRead);
-                    _udpThread.Start();
+                    //Receive an end point and connect the udp client, start the udp reader thread
+                    LoginPacket serverLogInDetails = (LoginPacket)packetFromServer;
+                    _udpClient.Connect((IPEndPoint)serverLogInDetails.endPoint);
+                    _udpReaderThread = new Thread(UDPRead);
+                    _udpReaderThread.Start();
                     break;
                 case PacketType.USERLIST:
-                    UserListPacket pUsers = (UserListPacket)packet;
-                    clients = pUsers.userList;
+                    //Set our client list to the user list passed from the server
+                    UserListPacket userListPacket = (UserListPacket)packetFromServer;
+                    clients = userListPacket.userList;
                     break;
             }
         }
-        public void tcpSend(Packet data)
+        public void TCPSend(Packet data)
         {
+            //Create a new memory stream and serialise the data into the memory stream
             MemoryStream ms = new MemoryStream();
-            _ms = new MemoryStream();
-            _formatter.Serialize(_ms, data);
-            byte[] buffer = _ms.GetBuffer();
-            _ms.Position = 0;
+            _memoryStream = new MemoryStream();
+            _formatter.Serialize(_memoryStream, data);
+            //Get the buffer from the memory stream
+            byte[] buffer = _memoryStream.GetBuffer();
+            _memoryStream.Position = 0;
+            //Write the buffer information along the tcp writer
             _tcpWriter.Write(buffer.Length);
             _tcpWriter.Write(buffer);
             _tcpWriter.Flush();
         }
 
-        public void udpSend(Packet data)
+        public void UDPSend(Packet data)
         {
-            _ms = new MemoryStream();
-            _formatter.Serialize(_ms, data);
-            byte[] buffer = _ms.GetBuffer();
-            _UdpClient.Send(buffer,buffer.Length);
+            //Here simply serialise and send the informaiton over
+            _memoryStream = new MemoryStream();
+            _formatter.Serialize(_memoryStream, data);
+            byte[] buffer = _memoryStream.GetBuffer();
+            _udpClient.Send(buffer,buffer.Length);
         }
 
-        public void UdpRead()
+        public void UDPRead()
         {
+            //Set a local var to any endpoint
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
             while (true)
             {
-                byte[] buffer = _UdpClient.Receive(ref endPoint);
-                _ms = new MemoryStream(buffer);
-                Packet packet = _formatter.Deserialize(_ms) as Packet;
-                ClientLogic(packet);
+                //receive an end point from the udp client connection and set it to buffer
+                byte[] buffer = _udpClient.Receive(ref endPoint);
+                _memoryStream = new MemoryStream(buffer);
+                //Deserialise the data and pass it to the client funciton
+                Packet packetFromServer = _formatter.Deserialize(_memoryStream) as Packet;
+                HandlePacket(packetFromServer);
             }
         }
 
@@ -133,14 +143,18 @@ namespace SimpleClient
             int noOfIncomingBytes;
             try
             {
+                //Read the bytes from the tcpReader and set them to noOfIncomingBytes;
                 while ((noOfIncomingBytes = _tcpReader.ReadInt32()) != 0)
                 {
-                    _ms = new MemoryStream(noOfIncomingBytes);
+                    //Set the memory stream and read the number of bytes we need into the buffer
+                    _memoryStream = new MemoryStream(noOfIncomingBytes);
                     byte[] buffer = _tcpReader.ReadBytes(noOfIncomingBytes);
-                    _ms.Write(buffer, 0, noOfIncomingBytes);
-                    _ms.Position = 0;
-                    Packet packet = _formatter.Deserialize(_ms) as Packet;
-                    ClientLogic(packet);
+                    //Write the bytes and how many there are into the buffer
+                    _memoryStream.Write(buffer, 0, noOfIncomingBytes);
+                    _memoryStream.Position = 0;
+                    //Deserialise the memory stream
+                    Packet packetFromServer = _formatter.Deserialize(_memoryStream) as Packet;
+                    HandlePacket(packetFromServer);
                 }
             }
             catch(SocketException e)
@@ -151,18 +165,18 @@ namespace SimpleClient
         public void CreateServerMessage(string message)
         {
             //udpSend(new ChatMessagePacket(message));
-            tcpSend(new ChatMessagePacket(message));
+            TCPSend(new ChatMessagePacket(message));
         }
 
         public void CreateNickName(string nickName)
         {
             //udpSend(new NickNamePacket(nickName));
-            tcpSend(new NickNamePacket(nickName)); 
+            TCPSend(new NickNamePacket(nickName)); 
         }
         public void CreateMessage(string message)
         {
             //udpSend(new ChatMessagePacket(message));
-            tcpSend(new ChatMessagePacket(message));
+            TCPSend(new ChatMessagePacket(message));
         }
 
         public void RequestDirectID()

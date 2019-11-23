@@ -8,28 +8,27 @@ namespace SimpleClient2
         delegate void UpdateChatWindowDelegate(string message);
         UpdateChatWindowDelegate _updateChatWindowDelegate;
 
-        public SimpleClient.SimpleClient _client;
+        public SimpleClient.SimpleClient _Client;
 
         public ClientForm(SimpleClient.SimpleClient client)
         {
             InitializeComponent();
-
             _updateChatWindowDelegate = new UpdateChatWindowDelegate(UpdateChatWindow);
-            _client = client;
+            _Client = client;
             InputMessage.Select();
         }
 
-        public void UpdateChatWindow(string message)
+        public void UpdateChatWindow(string messageRecieved)
         {
             try
             {
                 if (Chat.InvokeRequired)
                 {
-                    Invoke(_updateChatWindowDelegate, message);
+                    Invoke(_updateChatWindowDelegate, messageRecieved);
                 }
                 else
                 {
-                    Chat.Text += message += "\n";
+                    Chat.Text += messageRecieved += "\n";
                     Chat.SelectionStart = Chat.Text.Length;
                     Chat.ScrollToCaret();
                 }
@@ -39,37 +38,34 @@ namespace SimpleClient2
                 Console.WriteLine (e.Message);
             }
         }
-
         private void RichTextBox1_TextChanged(object sender, EventArgs e)
         {
 
         }
-
         private void Button1_Click(object sender, EventArgs e)
         {
-            _client.CreateMessage(InputMessage.Text);
+            _Client.CreateMessage(InputMessage.Text);
             InputMessage.Clear();
         }
 
         private void ClientForm_Load(object sender, EventArgs e)
         {
-            _client.Run();
+            _Client.Run();
         }
         private void ClientForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            _client.Stop();
+            _Client.Stop();
         }
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            _client.CreateNickName(InputMessage.Text);
+            _Client.CreateNickName(InputMessage.Text);
             InputMessage.Clear();
         }
-
         private void InputMessage_TextChanged(object sender, EventArgs e)
         {
-        }
 
+        }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
