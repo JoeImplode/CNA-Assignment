@@ -33,6 +33,7 @@ namespace SimpleServer
         {
             //Create a list of clients and pars and IP address
             _clientList = new List<Client>();
+            
             System.Net.IPAddress parsedAddress = IPAddress.Parse(serverIpAddress);
             _serverIpAddress = parsedAddress;
             _serverPort = port;
@@ -40,6 +41,7 @@ namespace SimpleServer
             _tcpListener = new TcpListener(parsedAddress, port);
             //Set our user list for all usernames
             _listOfNicknames = new List<string>();
+            _listOfNicknames.Add("Server");
         }
 
         public void Start()

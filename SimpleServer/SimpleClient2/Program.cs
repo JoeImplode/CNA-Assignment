@@ -15,7 +15,6 @@ namespace SimpleClient
             {
                 Console.WriteLine("Failed");
             }
-
         }
     }
 }

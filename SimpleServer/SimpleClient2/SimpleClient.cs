@@ -96,6 +96,7 @@ namespace SimpleClient
                     //Set our client list to the user list passed from the server
                     UserListPacket userListPacket = (UserListPacket)packetFromServer;
                     clients = userListPacket.userList;
+                    _form.UpdateClientListBox(userListPacket.userList);
                     break;
             }
         }
