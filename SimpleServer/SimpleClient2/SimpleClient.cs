@@ -101,6 +101,10 @@ namespace SimpleClient
 
                     _form.UpdateClientListBox(userListPacket.userList);
                     break;
+
+                case PacketType.GAMEREQ:
+                    GameRequestPacket gameReqPacket = (GameRequestPacket)packetFromServer;
+                    break;
             }
         }
         public void TCPSend(Packet data)
@@ -174,6 +178,11 @@ namespace SimpleClient
             //udpSend(new ChatMessagePacket(message));
             int _index = index;
             TCPSend(new ChatMessagePacket(message,_index));
+        }
+        public void RequestGame(int _userListIndex, int request, string _userName)
+        {
+            GameRequestPacket.RequestState state = (GameRequestPacket.RequestState)request;
+            TCPSend(new GameRequestPacket(_userListIndex, state,_userName));
         }
     }
 }

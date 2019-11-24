@@ -10,6 +10,7 @@ namespace SharedClassLibrary {
         NICKNAME,
         USERLIST,
         ENDPOINT,
+        GAMEREQ
     }
     [Serializable]
     public class Packet
@@ -56,6 +57,26 @@ namespace SharedClassLibrary {
         {
             this.type = PacketType.USERLIST;
             userList = _userList;
+        }
+    }
+    [Serializable]
+    public class GameRequestPacket : Packet
+    {
+        public enum RequestState
+        {
+            DECLINED,
+            ACCEPTED,
+            REQUESTED,  
+        }
+        public int userListNum;
+        public RequestState requestState;
+        public string userName;
+        public GameRequestPacket(int _userListNumber, RequestState state, string _userName)
+        {
+            type = PacketType.GAMEREQ;
+            userListNum = _userListNumber;
+            requestState = state;
+            userName = _userName;
         }
     }
     public class Class1

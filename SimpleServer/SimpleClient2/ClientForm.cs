@@ -9,35 +9,34 @@ namespace SimpleClient2
         delegate void                       UpdateChatWindowDelegate(string message);
         delegate void                       UpdateClientListBoxDelegate(List<string> clientListFromClient);
 
-        UpdateChatWindowDelegate            _updateChatWindowDelegate;
-        UpdateClientListBoxDelegate         _updateClientListBoxDeletage;
+        UpdateChatWindowDelegate            updateChatWindowDelegate;
+        UpdateClientListBoxDelegate         updateClientListBoxDeletage;
 
-        public SimpleClient.SimpleClient    _Client;
-        public bool                         _canConnectToServer;
-        public bool                         _canSetClientNickName;
+        public SimpleClient.SimpleClient    Client;
 
-        public string                       _clientNickName;
-        public int                          _clientListSelection;
+        public string                       clientNickName;
+        public int                          clientListSelection;
+        public bool                         isConnected;
 
         public ClientForm(SimpleClient.SimpleClient client)
         {
             InitializeComponent();
-            _updateChatWindowDelegate = new UpdateChatWindowDelegate(UpdateChatWindow);
-            _updateClientListBoxDeletage = new UpdateClientListBoxDelegate(UpdateClientListBox);
-            _Client = client;
+            updateChatWindowDelegate        = new UpdateChatWindowDelegate(UpdateChatWindow);
+            updateClientListBoxDeletage     = new UpdateClientListBoxDelegate(UpdateClientListBox);
+            Client                          = client;
 
             InputMessage.Select();
 
-            _canConnectToServer = false;
-            _canSetClientNickName = true;
-            button2.Enabled = _canConnectToServer;
-            _clientListSelection = 0;
-            comboBox1.Enabled = false;
+            button2.Enabled                 = false;
+            clientListSelection             = 0;
+            comboBox1.Enabled               = false;
+            button3.Enabled                 = false;
+            isConnected                     = false;
         }
         public void UpdateClientListBox(List<string> clientListFromClient)
         {
             if (comboBox1.InvokeRequired)
-                Invoke(_updateClientListBoxDeletage, clientListFromClient);
+                Invoke(updateClientListBoxDeletage, clientListFromClient);
 
             else
             {
@@ -47,7 +46,6 @@ namespace SimpleClient2
                     comboBox1.Items.Add(clientListFromClient[i]);
 
                 comboBox1.SelectedIndex = 0;
-                _canConnectToServer = true;
             }
         }
         public void UpdateChatWindow(string messageRecieved)
@@ -55,7 +53,7 @@ namespace SimpleClient2
             try
             {
                 if (chatBox.InvokeRequired)
-                    Invoke(_updateChatWindowDelegate, messageRecieved);
+                    Invoke(updateChatWindowDelegate, messageRecieved);
 
                 else
                 {
@@ -76,32 +74,34 @@ namespace SimpleClient2
         }
         private void SendButtonPressed(object sender, EventArgs e)
         {
-            if (_canConnectToServer == true)
+            if (isConnected == true)
             {
-                if (_clientListSelection == 0)
+                if (clientListSelection == 0)
                 {
-                    _Client.CreateMessage(InputMessage.Text);
+                    Client.CreateMessage(InputMessage.Text);
                     InputMessage.Clear();
                 }
                 else
-                    _Client.CreateMessage(InputMessage.Text, _clientListSelection);
+                    Client.CreateMessage(InputMessage.Text, clientListSelection);
             }
         }
 
         private void ClientForm_Load(object sender, EventArgs e)
         {
-            _Client.Run();
+            Client.Run();
         }
         private void ClientForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            _Client.Stop();
+            Client.Stop();
         }
 
         private void NickNameButtonPressed(object sender, EventArgs e)
         {
-            _clientNickName = InputMessage.Text;
-            _canConnectToServer = true;
-            button2.Enabled = _canConnectToServer; 
+            if (InputMessage.Text != string.Empty)
+            {
+                clientNickName = InputMessage.Text;
+                button2.Enabled = true;
+            }
         }
         private void InputMessageBoxChanged(object sender, EventArgs e)
         {
@@ -109,16 +109,22 @@ namespace SimpleClient2
         }
         private void ComboBoxChanged(object sender, EventArgs e)
         {
-            _clientListSelection = comboBox1.SelectedIndex;
+            clientListSelection = comboBox1.SelectedIndex;
         }
 
         private void ConnectButtonPressed(object sender, EventArgs e)
         {
-            _Client.CreateNickName(_clientNickName);
+            Client.CreateNickName(clientNickName);
             button1.Enabled = false;
             button2.Enabled = false;
-
+            isConnected = true;
             comboBox1.Enabled = true;
+            button3.Enabled = true;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Client.RequestGame(comboBox1.SelectedIndex, 2,clientNickName);
         }
     }
 }

@@ -75,6 +75,27 @@ namespace SimpleServer
                     Thread t = new Thread(new ParameterizedThreadStart(UDPClientMethod));
                     t.Start(mClient);
                     break;
+
+                case PacketType.GAMEREQ:
+                    GameRequestPacket pGameReqPacekt = (GameRequestPacket)packetReceived;
+                    int packetState = (int)pGameReqPacekt.requestState;
+                    switch(packetState)
+                    {
+                        case 0:
+                             if(CheckUserExists(clientList,pGameReqPacekt.userName))
+                                    RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
+                            break;
+                        case 1:
+                            if (CheckUserExists(clientList, pGameReqPacekt.userName))
+                                RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
+                            break;
+                        case 2:
+                            if(CheckUserExists(clientList,pGameReqPacekt.userName))
+                                    RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
+                            break;
+
+                    }
+                    break;
             }
             return packetReceived;
         }
@@ -121,6 +142,23 @@ namespace SimpleServer
             for (int i = 0; i < this.clientList.Count; i++)
                 this.clientList[i].TCPSend(p);
         }
+
+        public void RespondGameRequest(int userListNumber,GameRequestPacket.RequestState state, string username)
+        {
+            Packet pResponse = new GameRequestPacket(userListNumber, state, username);
+            for (int i = 0; i < this.clientList.Count; i++)
+                if (clientList[i].username == username)
+                    clientList[userListNumber-1].TCPSend(pResponse);
+        }
+
+        public bool CheckUserExists(List<Client> list, string check)
+        {
+            for (int i = 0; i < list.Count; i++)
+                if (list[i].username == check)
+                    return true;
+            return false;
+        }
+
     };
     class Client
     {
