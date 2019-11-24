@@ -6,17 +6,18 @@ namespace SimpleClient2
 {
     public partial class ClientForm : Form
     {
-        delegate void UpdateChatWindowDelegate(string message);
-        UpdateChatWindowDelegate _updateChatWindowDelegate;
+        delegate void                       UpdateChatWindowDelegate(string message);
+        delegate void                       UpdateClientListBoxDelegate(List<string> clientListFromClient);
 
-        delegate void UpdateClientListBoxDelegate(List<string> clientListFromClient);
-        UpdateClientListBoxDelegate _updateClientListBoxDeletage;
+        UpdateChatWindowDelegate            _updateChatWindowDelegate;
+        UpdateClientListBoxDelegate         _updateClientListBoxDeletage;
 
-        public SimpleClient.SimpleClient _Client;
-        public bool _canConnectToServer;
-        public bool _canSetClientNickName;
-        public string _clientNickName;
-        public int _clientListSelection;
+        public SimpleClient.SimpleClient    _Client;
+        public bool                         _canConnectToServer;
+        public bool                         _canSetClientNickName;
+
+        public string                       _clientNickName;
+        public int                          _clientListSelection;
 
         public ClientForm(SimpleClient.SimpleClient client)
         {
@@ -24,28 +25,27 @@ namespace SimpleClient2
             _updateChatWindowDelegate = new UpdateChatWindowDelegate(UpdateChatWindow);
             _updateClientListBoxDeletage = new UpdateClientListBoxDelegate(UpdateClientListBox);
             _Client = client;
+
             InputMessage.Select();
+
             _canConnectToServer = false;
             _canSetClientNickName = true;
             button2.Enabled = _canConnectToServer;
             _clientListSelection = 0;
             comboBox1.Enabled = false;
         }
-
         public void UpdateClientListBox(List<string> clientListFromClient)
         {
             if (comboBox1.InvokeRequired)
-            {
                 Invoke(_updateClientListBoxDeletage, clientListFromClient);
-            }
+
             else
             {
-
                 comboBox1.Items.Clear();
+
                 for (int i = 0; i < clientListFromClient.Count; i++)
-                {
                     comboBox1.Items.Add(clientListFromClient[i]);
-                }
+
                 comboBox1.SelectedIndex = 0;
                 _canConnectToServer = true;
             }
@@ -55,13 +55,13 @@ namespace SimpleClient2
             try
             {
                 if (chatBox.InvokeRequired)
-                {
                     Invoke(_updateChatWindowDelegate, messageRecieved);
-                }
+
                 else
                 {
                     chatBox.Text += messageRecieved += "\n";
                     chatBox.SelectionStart = chatBox.Text.Length;
+
                     chatBox.ScrollToCaret();
                 }
             }
@@ -84,9 +84,7 @@ namespace SimpleClient2
                     InputMessage.Clear();
                 }
                 else
-                {
                     _Client.CreateMessage(InputMessage.Text, _clientListSelection);
-                }
             }
         }
 
@@ -119,6 +117,7 @@ namespace SimpleClient2
             _Client.CreateNickName(_clientNickName);
             button1.Enabled = false;
             button2.Enabled = false;
+
             comboBox1.Enabled = true;
         }
     }

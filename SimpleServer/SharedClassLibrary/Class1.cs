@@ -16,7 +16,6 @@ namespace SharedClassLibrary {
     {
         public PacketType type = PacketType.EMPTY;
     }
-
     [Serializable]
     public class ChatMessagePacket : Packet
     {
@@ -33,7 +32,6 @@ namespace SharedClassLibrary {
     public class NickNamePacket : Packet
     {
         public string nickName = string.Empty;
-
         public NickNamePacket(string nickName)
         {
             this.type = PacketType.NICKNAME;
@@ -44,7 +42,6 @@ namespace SharedClassLibrary {
     public class LoginPacket : Packet
     {
         public EndPoint endPoint;
-
         public LoginPacket(EndPoint _endPoint)
         {
             this.type = PacketType.ENDPOINT;
@@ -55,7 +52,6 @@ namespace SharedClassLibrary {
     public class UserListPacket : Packet
     {
         public List<string> userList;
-
         public UserListPacket(List<string> _userList)
         {
             this.type = PacketType.USERLIST;
