@@ -81,8 +81,11 @@ namespace SimpleClient2
                     Client.CreateMessage(InputMessage.Text);
                     InputMessage.Clear();
                 }
-                else
+                else if ((string)comboBox1.Items[clientListSelection] != clientNickName)
+                {
                     Client.CreateMessage(InputMessage.Text, clientListSelection);
+                    InputMessage.Clear();
+                }
             }
         }
 
@@ -124,7 +127,8 @@ namespace SimpleClient2
 
         private void button3_Click(object sender, EventArgs e)
         {
-            Client.RequestGame(comboBox1.SelectedIndex, 2,clientNickName);
+            if((string)comboBox1.Items[clientListSelection] != clientNickName && comboBox1.SelectedIndex != 0)
+                Client.RequestGame(comboBox1.SelectedIndex, 2,clientNickName);
         }
     }
 }

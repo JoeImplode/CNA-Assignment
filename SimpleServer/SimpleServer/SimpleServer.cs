@@ -138,7 +138,6 @@ namespace SimpleServer
         public void SendClientList(List<string> clientList)
         { 
             Packet p = new UserListPacket(clientList);
-
             for (int i = 0; i < this.clientList.Count; i++)
                 this.clientList[i].TCPSend(p);
         }
