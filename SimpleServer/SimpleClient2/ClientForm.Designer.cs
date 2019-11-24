@@ -38,70 +38,73 @@
             // 
             // chatBox
             // 
-            this.chatBox.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.chatBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.chatBox.ForeColor = System.Drawing.SystemColors.MenuHighlight;
-            this.chatBox.Location = new System.Drawing.Point(152, 56);
+            this.chatBox.BackColor = System.Drawing.SystemColors.Control;
+            this.chatBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chatBox.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.chatBox.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chatBox.ForeColor = System.Drawing.Color.RoyalBlue;
+            this.chatBox.Location = new System.Drawing.Point(152, 77);
             this.chatBox.Name = "chatBox";
-            this.chatBox.Size = new System.Drawing.Size(461, 274);
+            this.chatBox.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.chatBox.Size = new System.Drawing.Size(461, 253);
             this.chatBox.TabIndex = 0;
             this.chatBox.Text = "";
-            this.chatBox.TextChanged += new System.EventHandler(this.RichTextBox1_TextChanged);
+            this.chatBox.TextChanged += new System.EventHandler(this.OutputTextBoxChanged);
             // 
             // InputMessage
             // 
-            this.InputMessage.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.InputMessage.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.InputMessage.Location = new System.Drawing.Point(152, 368);
             this.InputMessage.Name = "InputMessage";
             this.InputMessage.Size = new System.Drawing.Size(461, 44);
             this.InputMessage.TabIndex = 1;
             this.InputMessage.Text = "";
-            this.InputMessage.TextChanged += new System.EventHandler(this.InputMessage_TextChanged);
+            this.InputMessage.TextChanged += new System.EventHandler(this.InputMessageBoxChanged);
             // 
             // SubmitButton
             // 
             this.SubmitButton.Location = new System.Drawing.Point(664, 389);
             this.SubmitButton.Name = "SubmitButton";
-            this.SubmitButton.Size = new System.Drawing.Size(93, 23);
+            this.SubmitButton.Size = new System.Drawing.Size(112, 23);
             this.SubmitButton.TabIndex = 2;
             this.SubmitButton.Text = "Send";
             this.SubmitButton.UseVisualStyleBackColor = true;
-            this.SubmitButton.Click += new System.EventHandler(this.Button1_Click);
+            this.SubmitButton.Click += new System.EventHandler(this.SendButtonPressed);
             // 
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(664, 360);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(93, 23);
+            this.button1.Size = new System.Drawing.Size(112, 23);
             this.button1.TabIndex = 3;
             this.button1.Text = "Set-Nickname";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click_1);
+            this.button1.Click += new System.EventHandler(this.NickNameButtonPressed);
             // 
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(655, 56);
+            this.comboBox1.Location = new System.Drawing.Point(655, 77);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(121, 21);
             this.comboBox1.TabIndex = 4;
-            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged_2);
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.ComboBoxChanged);
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(655, 102);
+            this.button2.Location = new System.Drawing.Point(654, 286);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(122, 44);
             this.button2.TabIndex = 5;
             this.button2.Text = "Connect To Server";
             this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.button2.Click += new System.EventHandler(this.ConnectButtonPressed);
             // 
             // ClientForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.BackColor = System.Drawing.SystemColors.ActiveBorder;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.comboBox1);
