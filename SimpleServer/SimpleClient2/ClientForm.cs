@@ -15,7 +15,6 @@ namespace SimpleClient2
         public SimpleClient.SimpleClient    Client;
 
         public string                       clientNickName;
-        public int                          clientListSelection;
         public bool                         isConnected;
 
         public ClientForm(SimpleClient.SimpleClient client)
@@ -28,7 +27,6 @@ namespace SimpleClient2
             InputMessage.Select();
 
             button2.Enabled                 = false;
-            clientListSelection             = 0;
             comboBox1.Enabled               = false;
             button3.Enabled                 = false;
             isConnected                     = false;
@@ -76,14 +74,14 @@ namespace SimpleClient2
         {
             if (isConnected == true)
             {
-                if (clientListSelection == 0)
+                if (comboBox1.SelectedIndex == 0)
                 {
-                    Client.CreateMessage(InputMessage.Text);
+                    Client.CreateMessage(InputMessage.Text,"server");
                     InputMessage.Clear();
                 }
-                else if ((string)comboBox1.Items[clientListSelection] != clientNickName)
+                else if ((string)comboBox1.Items[comboBox1.SelectedIndex] != clientNickName)
                 {
-                    Client.CreateMessage(InputMessage.Text, clientListSelection);
+                    Client.CreateMessage(InputMessage.Text,(string)comboBox1.Items[comboBox1.SelectedIndex]);
                     InputMessage.Clear();
                 }
             }
@@ -112,7 +110,6 @@ namespace SimpleClient2
         }
         private void ComboBoxChanged(object sender, EventArgs e)
         {
-            clientListSelection = comboBox1.SelectedIndex;
         }
 
         private void ConnectButtonPressed(object sender, EventArgs e)
@@ -127,8 +124,19 @@ namespace SimpleClient2
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if((string)comboBox1.Items[clientListSelection] != clientNickName && comboBox1.SelectedIndex != 0)
-                Client.RequestGame(comboBox1.SelectedIndex, 2,clientNickName);
+            if((string)comboBox1.Items[comboBox1.SelectedIndex]
+                != clientNickName && comboBox1.SelectedIndex != 0)
+                Client.RequestGame((string)comboBox1.Items[comboBox1.SelectedIndex], 2,clientNickName);
+        }
+        public void CreateMessageBox(string username,string recipient)
+        {
+            DialogResult dialogResult = MessageBox.Show(username + " would like to play a game with you! ","Game Request",MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                Client.AcceptDeclineGame(recipient, 1, clientNickName);
+            }
+            else
+                Client.AcceptDeclineGame(recipient, 0, clientNickName);
         }
     }
 }

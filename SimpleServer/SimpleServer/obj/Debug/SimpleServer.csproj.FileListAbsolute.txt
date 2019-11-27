@@ -33,3 +33,13 @@ G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.csproj.CopyComplete
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.exe
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.pdb
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\bin\Debug\SimpleServer.exe.config
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\bin\Debug\SimpleServer.exe
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\bin\Debug\SimpleServer.pdb
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\bin\Debug\SharedClassLibrary.dll
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\bin\Debug\SharedClassLibrary.pdb
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.csprojAssemblyReference.cache
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.csproj.CoreCompileInputs.cache
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.csproj.CopyComplete
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.exe
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SimpleServer\obj\Debug\SimpleServer.pdb

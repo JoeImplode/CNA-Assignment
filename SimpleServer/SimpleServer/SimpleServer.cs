@@ -11,24 +11,23 @@ namespace SimpleServer
 {
     class SimpleServer
     {
-        public TcpListener      TCPListener;
-        public EndPoint         localEP;
-        public IPAddress        serverIpAddress;
-        public int              serverPort;
-        private Client          _mClient;
-        public List<Client>     clientList;
-        public List<string>     nicknameList;
- 
+        public TcpListener          TCPListener;
+        public EndPoint             localEP;
+        public IPAddress            serverIpAddress;
+        public int                  serverPort;
+        private Client              _mClient;
+        public List<Client>         clientList;
+        public List<string>         nicknameList;
+        public List<GameLogic>      Games;
         public SimpleServer(string serverIpAddress, int port)
         {
             clientList = new List<Client>();
             IPAddress parsedAddress = IPAddress.Parse(serverIpAddress);
             this.serverIpAddress = parsedAddress;
-
+            Games = new List<GameLogic>();
             serverPort = port;
             TCPListener = new TcpListener(parsedAddress, port);
             nicknameList = new List<string>();
-
             nicknameList.Add("Server");
         }
 
@@ -54,11 +53,13 @@ namespace SimpleServer
             {
                 case PacketType.CHATMESSAGE:
                     ChatMessagePacket pMessage = (ChatMessagePacket)packetReceived;
-                    if (pMessage.index == 0)
+                    if (pMessage.recipient == "server")
                         SendMessageAll(mClient.username + " - " + pMessage.message);
                     else
+                    {
                         CreateMessage(mClient.username + " whispers to you: " +
-                        pMessage.message, clientList[pMessage.index - 1]);
+                        pMessage.message,pMessage.recipient);
+                    }
                     break;
 
                 case PacketType.NICKNAME:
@@ -77,23 +78,46 @@ namespace SimpleServer
                     break;
 
                 case PacketType.GAMEREQ:
-                    GameRequestPacket pGameReqPacekt = (GameRequestPacket)packetReceived;
-                    int packetState = (int)pGameReqPacekt.requestState;
-                    switch(packetState)
+                    GameRequestPacket pGameReqPacket = (GameRequestPacket)packetReceived;
+                    int packetState = (int)pGameReqPacket.requestState;
+                    if (packetState == 0)
+                        CheckUserExists(clientList, pGameReqPacket.sender, pGameReqPacket);
+                    else if (packetState == 1)
                     {
-                        case 0:
-                             if(CheckUserExists(clientList,pGameReqPacekt.userName))
-                                    RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
-                            break;
-                        case 1:
-                            if (CheckUserExists(clientList, pGameReqPacekt.userName))
-                                RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
-                            break;
-                        case 2:
-                            if(CheckUserExists(clientList,pGameReqPacekt.userName))
-                                    RespondGameRequest(pGameReqPacekt.userListNum, pGameReqPacekt.requestState, pGameReqPacekt.userName);
-                            break;
-
+                        if (CheckGameAccepted(Games, pGameReqPacket.sender) == false)
+                        {
+                            GameLogic game = new GameLogic(pGameReqPacket.recipient, pGameReqPacket.sender);
+                            Games.Add(game);
+                            CheckUserExists(clientList, pGameReqPacket.sender, pGameReqPacket);
+                            CheckUserExists(clientList, pGameReqPacket.recipient, pGameReqPacket);
+                        }
+                        else
+                        {
+                            packetReceived = new Packet();
+                        }
+                    }
+                    else if (packetState == 2)
+                        CheckUserExists(clientList, pGameReqPacket.sender, pGameReqPacket);
+                    break;
+                case PacketType.GAME:
+                    GamePacket pGamePacket = (GamePacket)packetReceived;
+                    int gameNumber = CheckGameExists(Games, pGamePacket.sender);
+                    if (gameNumber == -1)
+                        break;
+                    else
+                        if (Games[gameNumber].CheckMove(pGamePacket.x, pGamePacket.y))
+                        {
+                        //Need to send a nought and a cross together
+                        if (pGamePacket.text == Games[gameNumber].Player1)
+                        {
+                            SendGamePacket(pGamePacket.sender, pGamePacket.recipient, pGamePacket.x, pGamePacket.y, pGamePacket.value, "X");
+                            SendGamePacket(pGamePacket.recipient, pGamePacket.sender, pGamePacket.x, pGamePacket.y, pGamePacket.value, "O");
+                        }
+                        else if(pGamePacket.text == Games[gameNumber].Player2)
+                        {
+                            SendGamePacket(pGamePacket.recipient, pGamePacket.sender, pGamePacket.x, pGamePacket.y, pGamePacket.value, "O");
+                            SendGamePacket(pGamePacket.sender, pGamePacket.recipient, pGamePacket.x, pGamePacket.y, pGamePacket.value, "X");
+                        }
                     }
                     break;
             }
@@ -108,7 +132,6 @@ namespace SimpleServer
         public void UDPClientMethod(object ClientObj)
         {
             Client clientUDP = (Client)ClientObj;
-
             while(clientUDP.UDPSocket.Connected)
                 HandlePacket(clientUDP.UDPRead(),clientUDP);
         }
@@ -116,23 +139,25 @@ namespace SimpleServer
         public void TCPClientMethod(object ClientObj)
         {
             Client clientTCP = (Client)ClientObj;
-
             while(clientTCP.TCPSocket.Connected)
                 HandlePacket(clientTCP.TCPRead(),clientTCP);
 
             clientTCP.Close();
             clientList.Remove(_mClient);
         }
-        public void CreateMessage(string message, Client recipient)
+        public void CreateMessage(string message, string recipient)
         {
-            Packet pSend = new ChatMessagePacket(message);
-            recipient.TCPSend(pSend);
-            //client.UDPSend(p);
+            Packet pSend = new ChatMessagePacket(message, recipient);
+            if (recipient == "server")
+                for (int i = 0; i < clientList.Count; i++)
+                    clientList[i].TCPSend(pSend);
+            else
+                CheckUserExists(clientList, recipient, pSend);
+                //client.UDPSend(p);
         }
         public void SendMessageAll(string message)
         {
-            for (int i = 0; i < clientList.Count; i++)
-                CreateMessage(message, clientList[i]);
+            CreateMessage(message, "server");
         }
 
         public void SendClientList(List<string> clientList)
@@ -142,21 +167,45 @@ namespace SimpleServer
                 this.clientList[i].TCPSend(p);
         }
 
-        public void RespondGameRequest(int userListNumber,GameRequestPacket.RequestState state, string username)
+        public bool CheckUserExists(List<Client> clientList, string checkString, Packet packet)
         {
-            Packet pResponse = new GameRequestPacket(userListNumber, state, username);
-            for (int i = 0; i < this.clientList.Count; i++)
-                if (clientList[i].username == username)
-                    clientList[userListNumber-1].TCPSend(pResponse);
-        }
-
-        public bool CheckUserExists(List<Client> list, string check)
-        {
-            for (int i = 0; i < list.Count; i++)
-                if (list[i].username == check)
+            for (int i = 0; i < clientList.Count; i++)
+                if (clientList[i].username == checkString)
+                {
+                    clientList[i].TCPSend(packet);
                     return true;
+                }
             return false;
         }
+
+        public int CheckGameExists(List<GameLogic> gameList,string checkString)
+        {
+            for (int i = 0; i < gameList.Count; i++)
+                if ((gameList[i].Player1 == checkString) || (gameList[i].Player2 == checkString))
+                    return i;
+            return -1;
+        }
+
+        public bool CheckGameAccepted(List<GameLogic> gameList,string checkString)
+        {
+            for (int i = 0; i < gameList.Count; i++)
+                if (gameList[i].Player1 == checkString || gameList[i].Player2 == checkString)
+                    return true;
+                return false;
+        }
+
+        public void SendGamePacket(string recipient, string sender, int x, int y, int value,string text)
+        {
+            Packet GamePacket = new GamePacket(x, y, recipient, sender, value,text);
+            for (int i = 0; i < clientList.Count; i++)
+                if (clientList[i].username == recipient)
+                {
+                    clientList[i].UDPSend(GamePacket);
+                    break;
+                }
+
+        }
+
 
     };
     class Client
@@ -263,6 +312,35 @@ namespace SimpleServer
         public void Close()
         {
             TCPSocket.Close();
+        }
+    }
+
+    class GameLogic
+    {
+        public string Player1;
+        public string Player2;
+        public int[,] GameBoard = new int[3, 3];
+        int outcome;
+
+        public GameLogic(string p1, string p2)
+        {
+            Player1 = p1;
+            Player2 = p2;
+            for (int x = 0; x < 3; x++)
+                for (int y = 0; y < 3; y++)
+                    GameBoard[x, y] = 0;
+
+        }
+
+        public bool CheckMove(int x, int y)
+        {
+            if (GameBoard[x, y] == 0)
+            {
+                GameBoard[x, y] = 1;
+                return true;
+            }
+            else
+                return false;     
         }
     }
 }

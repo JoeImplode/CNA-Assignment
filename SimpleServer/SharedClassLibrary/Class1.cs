@@ -10,7 +10,8 @@ namespace SharedClassLibrary {
         NICKNAME,
         USERLIST,
         ENDPOINT,
-        GAMEREQ
+        GAMEREQ,
+        GAME
     }
     [Serializable]
     public class Packet
@@ -21,12 +22,12 @@ namespace SharedClassLibrary {
     public class ChatMessagePacket : Packet
     {
         public string message = string.Empty;
-        public int index;
-        public ChatMessagePacket(string message, int index = 0)
+        public string recipient;
+        public ChatMessagePacket(string message, string recipient)
         {
             this.type = PacketType.CHATMESSAGE;
             this.message = message;
-            this.index = index;
+            this.recipient = recipient;
         }
     }
     [Serializable]
@@ -68,17 +69,39 @@ namespace SharedClassLibrary {
             ACCEPTED,
             REQUESTED,  
         }
-        public int userListNum;
+        public string recipient;
         public RequestState requestState;
-        public string userName;
-        public GameRequestPacket(int _userListNumber, RequestState state, string _userName)
+        public string sender;
+
+        public GameRequestPacket(string recipient, RequestState state, string sender)
         {
             type = PacketType.GAMEREQ;
-            userListNum = _userListNumber;
+            this.recipient = recipient;
             requestState = state;
-            userName = _userName;
+           this.sender = sender;
         }
     }
+
+    [Serializable]
+    public class GamePacket : Packet
+    {
+        public int x, y;
+        public string recipient;
+        public string sender;
+        public int value;
+        public string text;
+        public GamePacket(int x, int y, string recipient, string sender, int value, string text)
+        {
+            this.type = PacketType.GAME;
+            this.x = x;
+            this.y = y;
+            this.recipient = recipient;
+            this.sender = sender;
+            this.value = value;
+            this.text = text;
+        }
+    }
+
     public class Class1
     {
     }

@@ -14,3 +14,9 @@ G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassL
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.csprojAssemblyReference.cache
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.dll
 G:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.pdb
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\bin\Debug\SharedClassLibrary.dll
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\bin\Debug\SharedClassLibrary.pdb
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.csprojAssemblyReference.cache
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.csproj.CoreCompileInputs.cache
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.dll
+E:\Work\Year 2\CNA\Tutorials\ServerWork\CNA-Assignment\SimpleServer\SharedClassLibrary\obj\Debug\SharedClassLibrary.pdb
